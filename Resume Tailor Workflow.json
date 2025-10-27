@@ -1,0 +1,207 @@
+{
+  "name": "Resume Tailor Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "516c9394-465c-4372-992e-6f7247881881",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "resumeFile"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "8c4f091a-8db7-404d-be76-462487e934c2",
+      "name": "Webhook",
+      "webhookId": "516c9394-465c-4372-992e-6f7247881881"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "text",
+        "options": {
+          "fileName": "Application_Materials.txt"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1136,
+        0
+      ],
+      "id": "a1469e62-8af5-4b95-b945-81af69dcbc2f",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1344,
+        0
+      ],
+      "id": "b9a978ab-91ca-4d3b-80ce-362cbea02ec6",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "847ecebc-2704-43e7-9e1c-20565b2252fb",
+              "name": "text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        864,
+        0
+      ],
+      "id": "c5ae136b-590c-4bfd-b5ec-9274fbb3b3cc",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "resumeFile0",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "fdbd4432-8e0c-4819-94f1-fc754b587bf4",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=[INST]\nYou are an expert career coach and resume-tailoring assistant.\n\nI will provide you with my current resume and a job description for a role I want to apply for.\n\nYour task is to generate a report with three sections:\n1.  **Skills to Add:** Analyze my resume against the job description and list the key skills, keywords, and qualifications from the job description that are missing or under-emphasized in my resume.\n2.  **Tailored Cover Letter:** Write a professional and concise cover letter. It must be tailored to the job description and highlight how my experience (from the resume) makes me a strong fit for the role.\n3.  **Application Email Body:** Write a brief, professional email body for sending my application. The email should state my intention to apply, mention the attached resume and cover letter, and end with a call to action.\n\nPlease format the output clearly with markdown headings for each section.\n\n---\nMY RESUME:\n{{ $node[\"Extract from File\"].json.text }}\n---\nJOB DESCRIPTION:\n{{ $node[\"Webhook\"].json.body.jobDescription }}\n[/INST]",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        480,
+        0
+      ],
+      "id": "f907c2e5-62cc-4282-8ccc-a8b2885c6ee0",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        672,
+        224
+      ],
+      "id": "26acd3e5-2cac-496a-a505-e589c04303ed",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "RCXw39scbsORXLbE",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "085b4ffd-6bb3-435d-8d58-b2abe322bfdd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cc2f9f84c09164ed9930dbc7e86f64e91cbeaadb3ccb3eb41c962f0ce7e7f2aa"
+  },
+  "id": "RdWtRHFyyrsydV6H",
+  "tags": []
+}
